@@ -1,6 +1,6 @@
 <?php
 
-namespace AppBundle;
+namespace MediaAppBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
