@@ -11,6 +11,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Talav\Component\Media\Context\ContextConfig;
 use Talav\Component\Media\Provider\Constraints;
+use Talav\Component\Media\Provider\TemplateConfig;
 use Talav\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 
 class TalavMediaExtension extends AbstractResourceExtension
@@ -21,7 +22,7 @@ class TalavMediaExtension extends AbstractResourceExtension
         $config = $this->processConfiguration($configuration, $configs);
 
         // Load services.
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
 
         $this->registerResources('app', $config['resources'], $container);
@@ -47,7 +48,11 @@ class TalavMediaExtension extends AbstractResourceExtension
                 $config['file']['constraints']['file_constraints'],
                 [],
             ]))
-        ;
+            ->addMethodCall('setTemplateConfig', [new Definition(TemplateConfig::class, [
+                '@TalavMedia/Provider/thumbnail.html.twig',
+                '@TalavMedia/Provider/File/view.html.twig',
+            ])]);
+
         $container->getDefinition('talav.media.provider.image')
             ->setArgument(1, new Reference($config['image']['filesystem']))
             ->setArgument(2, new Reference($config['image']['cdn']))
@@ -57,17 +62,25 @@ class TalavMediaExtension extends AbstractResourceExtension
                 $config['image']['constraints']['file_constraints'],
                 $config['image']['constraints']['image_constraints'],
             ]))
-        ;
+            ->addMethodCall('setThumbnail', [new Reference($config['image']['thumbnail'])])
+            ->addMethodCall('setTemplateConfig', [new Definition(TemplateConfig::class, [
+                '@TalavMedia/Provider/thumbnail.html.twig',
+                '@TalavMedia/Provider/Image/view.html.twig',
+            ])]);
     }
 
     public function configureContexts(ContainerBuilder $container, array $config): void
     {
         $pool = $container->getDefinition('talav.media.provider.pool');
         foreach ($config as $name => $conf) {
+            $providers = [];
+            foreach ($conf['providers'] as $provider) {
+                $providers[] = new Reference($provider);
+            }
             $pool->addMethodCall('addContext', [new Definition(ContextConfig::class, [
                 $name,
-                new Reference($conf['provider']),
-                [],
+                $providers,
+                $conf['formats'],
             ])]);
         }
     }

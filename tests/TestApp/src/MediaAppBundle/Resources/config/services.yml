@@ -1,0 +1,11 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+  MediaAppBundle\Controller\:
+    resource: '../../Controller'
+    tags: ['controller.service_arguments']
+  MediaAppBundle\DataFixtures\AuthorFixtures:
+    class: MediaAppBundle\DataFixtures\AuthorFixtures
+  MediaAppBundle\Mapper\Configurator:
+    class: MediaAppBundle\Mapper\Configurator\MediaConfigurator
